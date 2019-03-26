@@ -1,0 +1,214 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Weather</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <style>
+        #datesTable {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        #datesTable td, #datesTable th{
+          border: 1px solid #ddd;
+          padding: 8px;
+        }
+
+        #datesTable tr:nth-child(even){background-color: #f2f2f2;}
+        #datesTable tr {cursor: pointer;}
+        #datesTable tr:hover {background-color: #ddd;}
+
+        #datesTable th {
+          padding-top: 12px;
+          padding-bottom: 12px;
+          text-align: left;
+          background-color: #040404;
+          color: white;
+        }
+        .topButtons {
+          background-color: #040404;
+          border: none;
+          color: white;
+          padding: 15px 32px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin: 4px 2px;
+          cursor: pointer;
+        }
+        body{
+          margin: auto;
+          width: 60%;
+          padding: 10px;
+        }
+        input[type=text], select {
+          text-align: center;
+          width: 100%;
+          padding: 12px 20px;
+          margin: 8px 0;
+          display: inline-block;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+        }
+
+        input[type=submit] {
+          width: 100%;
+          background-color: #040404;
+          color: white;
+          padding: 14px 20px;
+          margin: 8px 0;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2 align="center"> Weather API </h2>
+    <button id="showDates" class="topButtons">Show History</button>
+    <button class="topButtons" onclick="showHideDiv('addData')">Add Data</button>
+    <button class="topButtons" onclick="showHideDiv('delData')">Del Data</button>
+    <button class="topButtons" onclick="showHideDiv('forecast')">Forecast</button>
+    <br><br>
+    <div id="mainDiv"style="height: 450px; overflow: auto;">
+        <table id="datesTable">
+        </table>
+    </div>
+
+    <form id="addData" method="post" action="http://localhost:8086/weather/historical/" style="display:none" >
+        <input type="text" name="DATE" placeholder="Enter the date">
+        <br>
+        <input type="text" name="TMAX" placeholder="Enter TMAX">
+        <br>
+        <input type="text" name="TMIN" PLACEHOLDER="Enter TMIN">
+        <br>
+        <input type="submit" value="Upload">
+    </form>
+
+    <form id="delData" action="http://localhost:8086/weather/historical/" style="display:none">
+        <input type="text" name="DATE" placeholder="Enter the date">
+        <br>
+        <input type="submit" value="Delete">
+    </form>
+
+    <form id="forecast" action="http://localhost:8086/weather/forecast/" style="display:none">
+        <input type="text" name="DATE" placeholder="Enter the date">
+        <br>
+        <input type="submit" value="forecast">
+    </form>
+</body>
+</html>
+
+<script>
+
+function showHideDiv(ele) {
+    var srcElement = document.getElementById(ele);
+    if (srcElement != null) {
+        if (srcElement.style.display == "block") {
+            srcElement.style.display = 'none';
+        }
+        else {
+            srcElement.style.display = 'block';
+        }
+        return false;
+    }
+}
+
+$(document).ready(function(){
+  $("#showDates").click(function(){
+  $('#datesTable').html("");
+    $.ajax({url: "http://localhost:8086/weather/historical/", success: function(result){
+        var trHTML = '<tr><th>DATE</th><th>TMAX</th><th>TMIN</th></tr>';
+        $.each(result, function(i, item) {
+            trHTML += '<tr id="tr'+i+'"><td>'+item.DATE+'</td><td id="tmax'+i+'"> -- </td>'+ '<td id="tmin'+i+'">-- </td>' +'</tr>'
+        });
+        $('#mainDiv').css("border","1px solid #ddd");
+        $('#mainDiv').css("border-radius","5px");
+        $('#datesTable').append(trHTML);
+    }});
+  });
+});
+
+$(document).ready(function(){
+    $("#datesTable").delegate("tr", "click", function(){
+        var tr = $(this);
+        var date = tr.find("td:nth-child(1)").text();
+        $.ajax({url: "http://localhost:8086/weather/historical/"+date, success: function(result){
+            var tmaxid = (tr).find("td:nth-child(2)").attr('id');
+            var tminid = (tr).find("td:nth-child(3)").attr('id');
+            $('#'+tmaxid).html(result.TMAX);
+            $('#'+tminid).html(result.TMIN);
+        }});
+    });
+});
+
+$("#addData").submit(function(e) {
+    e.preventDefault(); // avoid to execute the actual submit of the form.
+    var form = $(this);
+    var url = form.attr('action');
+    var data = $("form").serialize().split("&");
+    var obj={};
+    var i=3;
+    for(var key in data){
+
+        obj[data[key].split("=")[0]] = data[key].split("=")[1];
+        i--;
+        if(i <1)
+            break;
+    }
+    console.log(obj)
+    $.ajax({
+       type: "POST",
+       url: url,
+       contentType: 'application/json; charset=utf-8',
+       data: JSON.stringify(obj),
+       success: function(data)
+       {
+            alert("Data inserted");
+            showHideDiv('addData');
+       }
+     });
+});
+
+$("#delData").submit(function(e) {
+    e.preventDefault();
+    var form = $(this);
+    var urlDes = form.attr('action');
+    console.log(form);
+    $.ajax({
+        url: urlDes+form.find('input[name="DATE"]').val(),
+        type: 'DELETE',
+        success: function(result) {
+            alert("Data Deleted");
+            showHideDiv('delData');
+        }
+    });
+});
+
+$("#forecast").submit(function(e) {
+    e.preventDefault();
+    var form = $(this);
+    var urlDes = form.attr('action');
+    $('#datesTable').html("");
+    console.log(form);
+    $.ajax({
+        url: urlDes+form.find('input[name="DATE"]').val(),
+        type: 'GET',
+        success: function(result) {
+            var trHTML = '<tr><th>DATE</th><th>TMAX</th><th>TMIN</th></tr>';
+            $.each(result, function(i, item) {
+                trHTML += '<tr><td>'+item.DATE+'</td><td>'+ item.TMAX +' </td>'+ '<td>'+ item.TMIN +'</td></tr>'
+            });
+            $('#mainDiv').css("border","1px solid #ddd");
+            $('#mainDiv').css("border-radius","5px");
+            $('#datesTable').append(trHTML);
+            showHideDiv('forecast');
+        }
+    });
+});
+
+
+
+
+</script>

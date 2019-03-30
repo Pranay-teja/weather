@@ -70,6 +70,7 @@
     <button class="topButtons" onclick="showHideDiv('addData')">Add Data</button>
     <button class="topButtons" onclick="showHideDiv('delData')">Del Data</button>
     <button class="topButtons" onclick="showHideDiv('forecast')">Forecast</button>
+    <button class="topButtons" id="forecastTemp" >Open weather</button>
     <br><br>
     <div id="mainDiv"style="height: 450px; overflow: auto;">
         <table id="datesTable">
@@ -114,6 +115,29 @@ function showHideDiv(ele) {
         return false;
     }
 }
+$(document).ready(function(){
+    $("#forecastTemp").click(function(){
+        $.ajax({url: "http://api.openweathermap.org/data/2.5/forecast/daily?id=4508722&cnt=7&appid=851f7f92543152f2ad87bf41042a2753", success: function(result){
+        var trHTML = '<tr><th>DATE</th><th>TMAX</th><th>TMIN</th></tr>';
+        $.each(result.list, function(i, item) {
+            var date = new Date(item.dt*1000);
+
+            date = date.getFullYear()+"/"+ (date.getMonth()+1)+"/"+date.getDate();
+            console.log(date);
+             console.log(item);
+             var tempMax = item.temp.max-273;
+             var tempMin = item.temp.min-273;
+
+             trHTML += '<tr><td>'+date+'</td><td>'+ tempMax.toFixed(2)  +' </td>'+ '<td>'+ tempMin.toFixed(2) +'</td></tr>'
+        });
+        $('#mainDiv').css("border","1px solid #ddd");
+        $('#mainDiv').css("border-radius","5px");
+        $('#datesTable').append(trHTML);
+    }});
+    });
+});
+
+
 
 $(document).ready(function(){
   $("#showDates").click(function(){

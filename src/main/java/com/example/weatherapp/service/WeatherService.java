@@ -49,7 +49,7 @@ public class WeatherService {
             return weatherRepository.getFuture(date);
         }
         String givenYear = date.substring(0,4);
-        date = "2014"+date.substring(4);
+        date = "2016"+date.substring(4);
         System.out.println(date);
         List<Weather> future = weatherRepository.getFuture(date);
         for(Weather weather:future){

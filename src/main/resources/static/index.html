@@ -77,7 +77,7 @@
         </table>
     </div>
 
-    <form id="addData" method="post" action="http://ec2-52-15-111-174.us-east-2.compute.amazonaws.com/weather/historical/" style="display:none" >
+    <form id="addData" method="post" action="/weather/historical/" style="display:none" >
         <input type="text" name="DATE" placeholder="Enter the date">
         <br>
         <input type="text" name="TMAX" placeholder="Enter TMAX">
@@ -87,13 +87,13 @@
         <input type="submit" value="Upload">
     </form>
 
-    <form id="delData" action="http://ec2-52-15-111-174.us-east-2.compute.amazonaws.com/weather/historical/" style="display:none">
+    <form id="delData" action="/weather/historical/" style="display:none">
         <input type="text" name="DATE" placeholder="Enter the date">
         <br>
         <input type="submit" value="Delete">
     </form>
 
-    <form id="forecast" action="http://ec2-52-15-111-174.us-east-2.compute.amazonaws.com/weather/forecast/" style="display:none">
+    <form id="forecast" action="/weather/forecast/" style="display:none">
         <input type="text" name="DATE" placeholder="Enter the date">
         <br>
         <input type="submit" value="forecast">
@@ -153,7 +153,10 @@ $(document).ready(function(){
 $(document).ready(function(){
   $("#showDates").click(function(){
   $('#datesTable').html("");
-    $.ajax({url: "http://ec2-52-15-111-174.us-east-2.compute.amazonaws.com/weather/historical/", success: function(result){
+     var originUrl = window.location.origin+ "/weather/historical/";
+     console.log(originUrl);
+    $.ajax({url: originUrl, success: function(result){
+
         var trHTML = '<tr><th>DATE</th><th>TMAX</th><th>TMIN</th></tr>';
         $.each(result, function(i, item) {
             trHTML += '<tr id="tr'+i+'"><td>'+item.DATE+'</td><td id="tmax'+i+'"> -- </td>'+ '<td id="tmin'+i+'">-- </td>' +'</tr>'
@@ -165,11 +168,13 @@ $(document).ready(function(){
   });
 });
 
+
 $(document).ready(function(){
     $("#datesTable").delegate("tr", "click", function(){
         var tr = $(this);
         var date = tr.find("td:nth-child(1)").text();
-        $.ajax({url: "http://ec2-52-15-111-174.us-east-2.compute.amazonaws.com/weather/historical/"+date, success: function(result){
+        var originUrl = window.location.origin;
+        $.ajax({url: originUrl+"/weather/historical/"+date, success: function(result){
             var tmaxid = (tr).find("td:nth-child(2)").attr('id');
             var tminid = (tr).find("td:nth-child(3)").attr('id');
             $('#'+tmaxid).html(result.TMAX);
@@ -181,6 +186,7 @@ $(document).ready(function(){
 $("#addData").submit(function(e) {
     e.preventDefault(); // avoid to execute the actual submit of the form.
     var form = $(this);
+    var originUrl = window.location.origin;
     var url = form.attr('action');
     var data = $("form").serialize().split("&");
     var obj={};
@@ -195,7 +201,7 @@ $("#addData").submit(function(e) {
     console.log(obj)
     $.ajax({
        type: "POST",
-       url: url,
+       url: originUrl+url,
        contentType: 'application/json; charset=utf-8',
        data: JSON.stringify(obj),
        success: function(data)
@@ -209,10 +215,11 @@ $("#addData").submit(function(e) {
 $("#delData").submit(function(e) {
     e.preventDefault();
     var form = $(this);
+    var originUrl = window.location.origin;
     var urlDes = form.attr('action');
     console.log(form);
     $.ajax({
-        url: urlDes+form.find('input[name="DATE"]').val(),
+        url: originUrl+urlDes+form.find('input[name="DATE"]').val(),
         type: 'DELETE',
         success: function(result) {
             alert("Data Deleted");
@@ -224,11 +231,12 @@ $("#delData").submit(function(e) {
 $("#forecast").submit(function(e) {
     e.preventDefault();
     var form = $(this);
+    var originUrl = window.location.origin;
     var urlDes = form.attr('action');
     $('#datesTable').html("");
     console.log(form);
     $.ajax({
-        url: urlDes+form.find('input[name="DATE"]').val(),
+        url: originUrl+urlDes+form.find('input[name="DATE"]').val(),
         type: 'GET',
         success: function(result) {
             var trHTML = '<tr><th>DATE</th><th>TMAX</th><th>TMIN</th></tr>';
